@@ -6,8 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     public AudioClip deathClip;
 
-    public float jumpForce = 700f;      //점프 힘의 값
-
+    public float jumpForce = 700f;          //점프 힘의 값
 
     //플레이어 캐릭터의 상태를 나타내는 변수
     private int jumpCount = 0;
@@ -18,8 +17,6 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D playerRigidbody;
     private Animator animator;
     private AudioSource playerAudio;
-
-
 
     // Start is called before the first frame update
     void Start()
@@ -35,66 +32,68 @@ public class PlayerController : MonoBehaviour
     {
         if (isDead)
         {
-            //사망 시 처리를 더이상 진행 하지 않고 종료
+            //사망 시 처리를 더이상 진행 하지 않고 종료 
             return;
         }
-
-        //마우스 왼쪽 버튼을 눌렀으면 && 최대 점프 횟수(2)에 도달 하지 않았다면
-        if (Input.GetMouseButtonDown(0))  jumpCount < 2)
+        //마우스 왼쪽 버튼을 눌렀으며 && 최대 점프 횟수(2)에 도달 하지 않았다면 
+        if (Input.GetMouseButtonDown(0) && jumpCount < 2)
         {
-            //점프 횟수 증가
+            //점프 횟수 증가 
             jumpCount++;
-
-            //점프 직전에 속도를 순간적으로 제로(0,0)로 변경
+            //점프 직전에 속도를 순간적으로 제로 (0,0)로 변경
             playerRigidbody.velocity = Vector2.zero;
-
             //리지드바디에 위쪽으로 힘 주기
-            playerRigidbody.AddForce(new Vector2(0, jumpForce))
-
+            playerRigidbody.AddForce(new Vector2(0, jumpForce));
             //오디오 소스 재생
             //playerAudio.Play();
-        
+        }
         else if (Input.GetMouseButtonDown(0) && playerRigidbody.velocity.y > 0)
         {
-            //마우스 왼쪽 버튼에서 손을 떼는 순간 && 속도의 y 값이 양수라면( 위로 상승 중)
+            //마우스 왼쪽 버튼에서 손을 떼는 순간 && 속도의 y 값이 양수라면 (위로 상승 중)
             //현재 속도를 절반으로 변경
             playerRigidbody.velocity = playerRigidbody.velocity * 0.5f;
         }
-        animator.SetBool("Grounded", isGrounded);       //애니메이터의 Grounded 파라미터를 isGrounded 값으로 갱신
+        animator.SetBool("Grounded", isGrounded); //애니메이터의 Grounded 파라미터를 isGrounded 값으로 갱신
     }
 
     private void Die()
     {
-            //애니메이터의 Die 트리거 파라미터를 셋팅
-            animator.SetTrigger("Die");
+        //애니메이터의 Die 트리거 파라미터를 셋팅
+        animator.SetTrigger("Die");
 
-            //속도를 제로 (0,0) 로 변경
-            playerRigidbody.velocity = Vector2.zero ;
+        //속도를 제로 (0,0)로 변경
+        playerRigidbody.velocity = Vector2.zero;
+        //사망 상태를 true로 변경 
+        isDead = true;
 
-            //사망상태를 true 로 변경
-            isDead = true;
+        //게임 매니저의 게임 오버 처리 실행
+        GameManager.Instance.OnPlayerDead();        //싱글톤이여서 어디서든 접근이 가능하여 함수 호출
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.tag == "Dead" && !isDead) 
+        if (collision.tag == "Dead" && !isDead)
         {
-                //충돌한 상대방의 태그가 Dead 이며 아직 사망하지 않았다면 Die() 함수를 실행
-                Die();
+            //충돌한 상대방의 태그가 Dead 이며 아직 사망하지 않았다면 Die() 함수를 실행 
+            Die();
         }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
+    {
+        //어떤 콜라이더와 닿았으며 충돌 표면이 위쪽을 보고 있으면 
+        if (collision.contacts[0].normal.y > 0.7)
         {
-            if (collision.contacts[0].normal.y > 0.7)
-            {
-                //isGrounded 를 true로 변경하고, 누적 점프 횟수를 0으로 리셋
-                isGrounded = true;
-                jumpCount = 0;
-            }
-        }
+            //isGrounded를 true로 변경하고 , 누적 점프 횟수를 0으로 리셋
+            isGrounded = true;
+            jumpCount = 0;
 
-    
-    
-}
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        //어떤 콜라이더에서 뗴어진 경우 isGround를 false로 변경
+        isGrounded = false;
+    }
 }
